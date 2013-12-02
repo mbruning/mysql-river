@@ -1,0 +1,16 @@
+{
+    "type":"mysql",
+    "mysql":{
+        "index":"artist_meta3",
+        "type":"artist",
+        "hostname":"10.0.0.211:3306",
+        "database":"semetric",
+        "username":"marc",
+        "password":"JadEivEshk7",
+        "uniqueIdField":"id",
+        "query":"select artist.*, resolution.resolution from artist inner join resolution on artist.mmid = resolution.mmid limit 30",
+        "dbOpts":"zeroDateTimeBehavior=convertToNull",
+        "interval":"60000",
+        "verbose": "false"
+    }
+}
