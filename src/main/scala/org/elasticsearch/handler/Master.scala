@@ -9,37 +9,44 @@ package org.elasticsearch.handler
  */
 
 import akka.actor._
-import org.elasticsearch.handler.MysqlActor
-import org.elasticsearch.river.mysql.MysqlRiver.{Start, Stop, Query, SQLResult}
 import org.elasticsearch.river.mysql.MysqlRiver.SQLResult
 import org.elasticsearch.river.mysql.MysqlRiver.Start
 import org.elasticsearch.river.mysql.MysqlRiver.Query
+
+//import org.elasticsearch.handler.MysqlActor
+import org.elasticsearch.river.mysql.MysqlRiver._
 import scala.concurrent.duration._
 import akka.actor.Cancellable
 import org.elasticsearch.common.logging.ESLoggerFactory
 
-class Master extends Actor {
+class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
 
   var job:Cancellable = _
   val logger = ESLoggerFactory.getLogger(getClass.getName)
 
   def receive = {
-    case Start(system, params) => startMysqlActor(system, params)
+    case Start => startMysqlActor()
     case Stop => job.cancel()
     case SQLResult(result) => startVoldemortActor(result)
+    case FinalData(result) => addToElasticSearch(result)
   }
 
   def startVoldemortActor(result: List[Map[String, Any]]) {
-    logger.info("====>STARTVOLDMORT {}", result)
+    val voldemortActor = system.actorOf(Props(new VoldemortActor(params("voldemort"))), name="VoldemortActor")
+    voldemortActor ! SQLResult(result)
   }
 
-  def startMysqlActor(system: ActorSystem, params: Map[String, String]) {
+  def addToElasticSearch(data: List[Map[String, Any]]) {
+    logger.info("====>ADDTOES {}", data)
+  }
 
-    val query: String = params("query")
-    val user: String = params("user")
-    val url: String = params("url")
-    val pass: String = params("pass")
-    val interval: Int = params("interval").toInt
+  def startMysqlActor() {
+
+    val query: String = params("query").toString
+    val user: String = params("user").toString
+    val url: String = params("url").toString
+    val pass: String = params("pass").toString
+    val interval: Int = params("interval").toString.toInt
     import system.dispatcher
     val mysqlActor = system.actorOf(Props(new MysqlActor), name="MySQLActor")
     job = system.scheduler.schedule(0 milliseconds, interval milliseconds, mysqlActor, Query(Map("query" -> query,
@@ -49,3 +56,4 @@ class Master extends Actor {
     logger.info("Scheduled job for query:", query)
   }
 }
+

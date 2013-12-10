@@ -6,6 +6,8 @@ version := "1.0"
 
 scalaVersion := "2.10.2"
 
+resolvers += "additional maven repo" at "http://repo.springsource.org/libs-milestone/"
+
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3-M1"
@@ -23,6 +25,8 @@ libraryDependencies += "com.typesafe.slick" % "slick_2.10" % "2.0.0-M3"
 libraryDependencies += "com.typesafe" % "slick_2.10" % "1.0.0-RC2"
 
 libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.27"
+
+libraryDependencies += "voldemort" % "voldemort" % "0.96"
 
 test in assembly := {}
 

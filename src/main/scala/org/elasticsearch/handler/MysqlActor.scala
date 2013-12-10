@@ -14,7 +14,7 @@ import org.elasticsearch.common.logging.ESLoggerFactory
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
 import scala.slick.jdbc.JdbcBackend.Database
 import Q.interpolation
-import org.elasticsearch.handler.ResultMap
+//import org.elasticsearch.handler.ResultMap
 import org.elasticsearch.river.mysql.MysqlRiver.{Query, SQLResult}
 
 class MysqlActor extends Actor {

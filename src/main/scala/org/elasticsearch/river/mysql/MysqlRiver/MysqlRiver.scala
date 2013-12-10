@@ -13,10 +13,11 @@ import org.elasticsearch.handler.Master
 
 // define actor messages
 sealed trait MysqlMessage
-case class Start(system: ActorSystem, params: Map[String, String]) extends MysqlMessage
-case class Query(params: Map[String, String])
-case class SQLResult(result: List[Map[String, Any]])
+case object Start extends MysqlMessage
 case object Stop extends MysqlMessage
+case class Query(params: Map[String, Any]) extends MysqlMessage
+case class SQLResult(result: List[Map[String, Any]]) extends MysqlMessage
+case class FinalData(result: List[Map[String, Any]]) extends MysqlMessage
 
 // main river class
 class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Client)
@@ -24,14 +25,24 @@ class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Cli
 
   // get this from settings
   val query:String = "select * from artist limit 10"
-  val url: String = "jdbc:mysql://10.0.0.211:3306/semetric?zeroDateTimeBehavior=convertToNull"
+  val mySqlUrl: String = "jdbc:mysql://10.0.0.211:3306/semetric?zeroDateTimeBehavior=convertToNull"
   val user: String = "marc"
   val pass: String = "JadEivEshk7"
   val interval: String = "20000"
+  val voldemortUrl: String = "tcp://10.0.0.166:6666"
+  val voldemortStore: String = "v4-lastfm_details"
+
+  val voldemortParams = Map("url" -> voldemortUrl,
+                            "store" -> voldemortStore)
 
   // setup system
   val system = ActorSystem("MySQL")
-  val master = system.actorOf(Props(new Master), name="Master")
+  val master = system.actorOf(Props(new Master(system, Map("query" -> query,
+                                                           "url" -> mySqlUrl,
+                                                           "user" -> user,
+                                                           "pass" -> pass,
+                                                           "interval" -> interval,
+                                                           "voldemort" -> voldemortParams))), name="MasterActor")
 
   override def close() {
     logger.info("Closing river")
@@ -41,11 +52,7 @@ class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Cli
 
   override def start() {
     // tell master to start
-    master ! Start(system, Map("query" -> query,
-                               "url" -> url,
-                               "user" -> user,
-                               "pass" -> pass,
-                               "interval" -> interval))
+    master ! Start
     logger.info("Started master")
   }
 }
