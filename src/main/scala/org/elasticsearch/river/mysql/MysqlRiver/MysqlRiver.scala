@@ -5,32 +5,48 @@ import org.elasticsearch.river.{AbstractRiverComponent, River, RiverName, RiverS
 import org.elasticsearch.client.{Requests, Client}
 import akka.actor.ActorSystem
 import akka.actor.Props
-import org.elasticsearch.handler.mysqlActor
-import scala.concurrent.duration._
-import akka.actor.Cancellable
+import org.elasticsearch.handler.Master
+
 /**
  * @author ${user.name}
  */
 
+// define actor messages
+sealed trait MysqlMessage
+case class Start(system: ActorSystem, params: Map[String, String]) extends MysqlMessage
+case class Query(params: Map[String, String])
+case class SQLResult(result: List[Map[String, Any]])
+case object Stop extends MysqlMessage
 
+// main river class
 class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Client)
   extends AbstractRiverComponent(name, settings) with River {
 
-  var job:Cancellable = _
+  // get this from settings
   val query:String = "select * from artist limit 10"
+  val url: String = "jdbc:mysql://10.0.0.211:3306/semetric?zeroDateTimeBehavior=convertToNull"
+  val user: String = "marc"
+  val pass: String = "JadEivEshk7"
+  val interval: String = "20000"
+
+  // setup system
+  val system = ActorSystem("MySQL")
+  val master = system.actorOf(Props(new Master), name="Master")
 
   override def close() {
-    job.cancel()
     logger.info("Closing river")
+    // tell master to stop
+    master ! Stop
   }
 
   override def start() {
-    val system = ActorSystem("MySQL")
-    import system.dispatcher
-    val mysqlActor = system.actorOf(Props(new mysqlActor(logger)), name="MySQLActor")
-    job = system.scheduler.schedule(0 milliseconds, 10000 milliseconds, mysqlActor, query)
-    logger.info("Scheduled job for query: {}", query)
+    // tell master to start
+    master ! Start(system, Map("query" -> query,
+                               "url" -> url,
+                               "user" -> user,
+                               "pass" -> pass,
+                               "interval" -> interval))
+    logger.info("Started master")
   }
-
 }
 

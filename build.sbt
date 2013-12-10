@@ -18,6 +18,12 @@ libraryDependencies += "junit" % "junit" % "4.11"
 
 libraryDependencies += "org.scala-tools.testing" % "specs_2.9.3" % "1.6.9"
 
+libraryDependencies += "com.typesafe.slick" % "slick_2.10" % "2.0.0-M3"
+
+libraryDependencies += "com.typesafe" % "slick_2.10" % "1.0.0-RC2"
+
+libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.27"
+
 test in assembly := {}
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
