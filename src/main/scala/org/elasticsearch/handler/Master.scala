@@ -12,12 +12,13 @@ import akka.actor._
 import org.elasticsearch.river.mysql.MysqlRiver.SQLResult
 import org.elasticsearch.river.mysql.MysqlRiver.Start
 import org.elasticsearch.river.mysql.MysqlRiver.Query
-
-//import org.elasticsearch.handler.MysqlActor
+import collection.JavaConverters._
 import org.elasticsearch.river.mysql.MysqlRiver._
 import scala.concurrent.duration._
 import akka.actor.Cancellable
 import org.elasticsearch.common.logging.ESLoggerFactory
+
+class ConfigException(msg: String) extends RuntimeException(msg)
 
 class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
 
@@ -26,34 +27,22 @@ class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
 
   def receive = {
     case Start => startMysqlActor()
-    case Stop => job.cancel()
-    case SQLResult(result) => startVoldemortActor(result)
-    case FinalData(result) => addToElasticSearch(result)
-  }
-
-  def startVoldemortActor(result: List[Map[String, Any]]) {
-    val voldemortActor = system.actorOf(Props(new VoldemortActor(params("voldemort"))), name="VoldemortActor")
-    voldemortActor ! SQLResult(result)
-  }
-
-  def addToElasticSearch(data: List[Map[String, Any]]) {
-    logger.info("====>ADDTOES {}", data)
+    case SQLResult(result) => system.actorOf(Props(new ElasticsearchActor), name = "ESActor") ! SQLResult(result)
+    case Stop => logger.info("Master received stop!")
   }
 
   def startMysqlActor() {
-
-    val query: String = params("query").toString
-    val user: String = params("user").toString
-    val url: String = params("url").toString
-    val pass: String = params("pass").toString
-    val interval: Int = params("interval").toString.toInt
     import system.dispatcher
-    val mysqlActor = system.actorOf(Props(new MysqlActor), name="MySQLActor")
-    job = system.scheduler.schedule(0 milliseconds, interval milliseconds, mysqlActor, Query(Map("query" -> query,
-                                                                                                 "url" -> url,
-                                                                                                 "user" -> user,
-                                                                                                 "pass" -> pass)))
-    logger.info("Scheduled job for query:", query)
+    job = system.scheduler.schedule(0 milliseconds,
+                                    params("interval").toString.toInt milliseconds,
+                                    system.actorOf(Props(new MysqlActor), name = "DBActor"),
+                                    {
+                                      Query(Map("query" -> params("query").toString,
+                                        "url" -> params("url").toString,
+                                        "user" -> params("user").toString,
+                                        "pass" -> params("pass").toString))
+                                    })
+    logger.info("Scheduled job")
   }
 }
 

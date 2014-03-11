@@ -16,7 +16,7 @@ import org.elasticsearch.river.RiversModule
 
 class MysqlRiverPlugin @Inject() extends AbstractPlugin {
 
-  override def name = "mysql-river"
+  override def name = "mysql"
 
   override def description = "sync myql db with elasticsearch river"
 

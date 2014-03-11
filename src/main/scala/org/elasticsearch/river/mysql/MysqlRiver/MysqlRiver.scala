@@ -29,25 +29,19 @@ class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Cli
   val user: String = "marc"
   val pass: String = "JadEivEshk7"
   val interval: String = "20000"
-  val voldemortUrl: String = "tcp://10.0.0.166:6666"
-  val voldemortStore: String = "v4-lastfm_details"
-
-  val voldemortParams = Map("url" -> voldemortUrl,
-                            "store" -> voldemortStore)
-
   // setup system
   val system = ActorSystem("MySQL")
   val master = system.actorOf(Props(new Master(system, Map("query" -> query,
                                                            "url" -> mySqlUrl,
                                                            "user" -> user,
                                                            "pass" -> pass,
-                                                           "interval" -> interval,
-                                                           "voldemort" -> voldemortParams))), name="MasterActor")
+                                                           "interval" -> interval))), name="MasterActor")
 
   override def close() {
     logger.info("Closing river")
     // tell master to stop
     master ! Stop
+    system.shutdown()
   }
 
   override def start() {

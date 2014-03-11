@@ -12,13 +12,13 @@ import collection.JavaConversions._
 import akka.actor.Actor
 import org.elasticsearch.common.logging.ESLoggerFactory
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
-import scala.slick.jdbc.JdbcBackend.Database
+import scala.slick.jdbc.JdbcBackend.{Database, DatabaseDef}
 import Q.interpolation
-//import org.elasticsearch.handler.ResultMap
 import org.elasticsearch.river.mysql.MysqlRiver.{Query, SQLResult}
 
 class MysqlActor extends Actor {
 
+  var result: List[Map[String, Any]] = _
   val logger = ESLoggerFactory.getLogger(getClass.getName)
   // load driver first
   try {
@@ -31,15 +31,27 @@ class MysqlActor extends Actor {
     case Query(params) => sender ! SQLResult(fetchQuery(params))
   }
 
-  def fetchQuery(queryParam: Map[String, String]) = {
-    val queryString: String = queryParam("query")
-    val userName: String = queryParam("user")
-    val url: String = queryParam("url")
-    val pass: String = queryParam("pass")
-    val db = Database.forURL(url, user=userName, password=pass, driver="com.mysql.jdbc.Driver")
-    val result = db.withSession {
+  def connect(url: String, userName: String, pass: String) = {
+    Database.forURL(url, user=userName, password=pass, driver="com.mysql.jdbc.Driver")
+  }
+
+  def query(db: DatabaseDef, queryString: String) = {
+    db.withSession {
       implicit session =>
         sql"#$queryString".as(ResultMap).list
+    }
+  }
+
+  def fetchQuery(queryParam: Map[String, Any]) = {
+    try {
+      val queryString: String = queryParam("query").toString
+      val userName: String = queryParam("user").toString
+      val url: String = queryParam("url").toString
+      val pass: String = queryParam("pass").toString
+      val db = connect(url, userName, pass)
+      result = query(db, queryString)
+    } catch {
+      case exc: Exception => logger.info("MYSQL exception occurred", exc)
     }
     result
   }
