@@ -26,8 +26,8 @@ class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Cli
   // get this from settings
   val query:String = "select * from artist limit 10"
   val mySqlUrl: String = "jdbc:mysql://10.0.0.211:3306/semetric?zeroDateTimeBehavior=convertToNull"
-  val user: String = "marc"
-  val pass: String = "JadEivEshk7"
+  val user: String = "global_read"
+  val pass: String = "motNigonNut2"
   val interval: String = "20000"
   // setup system
   val system = ActorSystem("MySQL")
