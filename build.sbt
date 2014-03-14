@@ -8,6 +8,12 @@ scalaVersion := "2.10.2"
 
 resolvers += "additional maven repo" at "http://repo.springsource.org/libs-milestone/"
 
+resolvers += "gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/"
+
+libraryDependencies += "net.liftweb" %% "lift-json" % "2.5.1"
+
+libraryDependencies += "wabisabi" %% "wabisabi" % "2.0.8"
+
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3-M1"

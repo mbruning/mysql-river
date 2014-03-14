@@ -24,10 +24,15 @@ class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
 
   var job:Cancellable = _
   val logger = ESLoggerFactory.getLogger(getClass.getName)
+  val esActor: ActorRef = system.actorOf(Props(new ElasticsearchActor(params("index").toString,
+                                                                      params("type").toString,
+                                                                      params("unique").toString,
+                                                                      params("eshost").toString)), name = "ESActor")
+  val dbActor: ActorRef = system.actorOf(Props(new MysqlActor), name = "DBActor")
 
   def receive = {
     case Start => startMysqlActor()
-    case SQLResult(result) => system.actorOf(Props(new ElasticsearchActor), name = "ESActor") ! SQLResult(result)
+    case SQLResult(result) => result map (r => esActor ! SQLRow(r))
     case Stop => logger.info("Master received stop!")
   }
 
@@ -35,14 +40,16 @@ class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
     import system.dispatcher
     job = system.scheduler.schedule(0 milliseconds,
                                     params("interval").toString.toInt milliseconds,
-                                    system.actorOf(Props(new MysqlActor), name = "DBActor"),
+                                    dbActor,
                                     {
                                       Query(Map("query" -> params("query").toString,
-                                        "url" -> params("url").toString,
-                                        "user" -> params("user").toString,
-                                        "pass" -> params("pass").toString))
+                                                "url" -> params("url").toString,
+                                                "user" -> params("user").toString,
+                                                "pass" -> params("pass").toString))
                                     })
     logger.info("Scheduled job")
   }
+
+
 }
 

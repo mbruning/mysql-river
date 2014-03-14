@@ -51,7 +51,7 @@ class MysqlActor extends Actor {
       val db = connect(url, userName, pass)
       result = query(db, queryString)
     } catch {
-      case exc: Exception => logger.info("MYSQL exception occurred", exc)
+      case exc: Exception => logger.info("MySQL exception occurred", exc)
     }
     result
   }
