@@ -32,21 +32,28 @@ class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
   def receive = {
     case Start => startMysqlActor()
     case SQLResult(result) => result map (r => esActor ! SQLRow(r))
-    case Stop => logger.info("Master received stop!")
+    case Stop => logger.info("Master received stop!"); job.cancel()
   }
 
   def startMysqlActor() {
     import system.dispatcher
-    job = system.scheduler.schedule(0 milliseconds,
-                                    params("interval").toString.toInt milliseconds,
-                                    dbActor,
-                                    {
-                                      Query(Map("query" -> params("query").toString,
-                                                "url" -> params("url").toString,
-                                                "user" -> params("user").toString,
-                                                "pass" -> params("pass").toString))
-                                    })
-    logger.info("Scheduled job")
+    val interval: Any = params("interval")
+    val query: Query = {
+      Query(Map("query" -> params("query").toString,
+        "url" -> params("url").toString,
+        "user" -> params("user").toString,
+        "pass" -> params("pass").toString))
+    }
+    if (interval == null) {
+      system.scheduler.scheduleOnce(0 milliseconds, dbActor, query)
+      logger.info("Scheduled single job")
+    } else {
+      job = system.scheduler.schedule(0 milliseconds,
+                                      interval.toString.toInt milliseconds,
+                                      dbActor,
+                                      query)
+      logger.info("Scheduled job with interval {}", interval.toString)
+    }
   }
 
 
