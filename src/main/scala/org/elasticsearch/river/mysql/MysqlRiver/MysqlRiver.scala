@@ -26,17 +26,23 @@ class MysqlRiver @Inject()(name: RiverName, settings: RiverSettings, client: Cli
   extends AbstractRiverComponent(name, settings) with River {
   val riverType: String = "mysql"
   val params = settings.settings.get(riverType).asInstanceOf[java.util.Map[String, String]]
-  // get this from settings
-  val query:String = params.get("query") // "select * from artist limit 10"
-  val mySqlUrl: String = "jdbc:mysql://%s/%s?%s".format(params.get("hostname"), params.get("database"), params.get("dbOpts"))   // "jdbc:mysql://10.0.0.211:3306/semetric?zeroDateTimeBehavior=convertToNull"
-  logger.info("===>URL {}", mySqlUrl)
-  val user: String = params.get("username") // "global_read"
-  val pass: String = params.get("password") // "motNigonNut2"
-  val interval: String = params.get("interval") // "20000"
-  val index: String = params.get("index") // "artist-test-001"
-  val `type`: String = params.get("type") // "artist"
-  val unique: String = params.get("uniqueIDField") // "id"
-  val esHost: String = params.get("elasticsearchHost") //"http://localhost:9200"
+  val query:String = params.get("query")
+  val mySqlUrl: String = {
+    val host: String = params.get("hostname")
+    val db: String = params.get("database")
+    val opts: String = {
+      val o: String = params.get("dbOpts")
+      if (o != null) "?%s".format(o) else ""
+    }
+    "jdbc:mysql://%s/%s%s".format(host, db, opts)
+  }
+  val user: String = params.get("username")
+  val pass: String =  params.get("password")
+  val interval: String = params.get("interval")
+  val index: String = params.get("index")
+  val `type`: String = params.get("type")
+  val unique: String = params.get("uniqueIdField")
+  val esHost: String =  params.get("elasticsearchHost")
   // setup system
   val system = ActorSystem("MySQL")
   val master = system.actorOf(Props(new Master(system, Map("index" -> index,

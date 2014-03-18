@@ -1,7 +1,7 @@
 {
     "type":"mysql",
     "mysql":{
-        "index":"entity-test-001",
+        "index":"artist-test-001",
         "type":"artist",
         "hostname":"10.0.0.211:3306",
         "database":"semetric",
@@ -9,9 +9,9 @@
         "password":"motNigonNut2",
         "uniqueIdField":"id",
         "elasticsearchHost": "http://localhost:9200",
-        "query":"select * from artist limit 30",
+        "query":"select * from artist limit 10",
         "dbOpts":"zeroDateTimeBehavior=convertToNull",
-        "interval":"60000",
+        "interval":"20000",
         "verbose": "false"
     }
 }

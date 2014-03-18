@@ -21,7 +21,6 @@ import org.elasticsearch.common.logging.ESLoggerFactory
 class ConfigException(msg: String) extends RuntimeException(msg)
 
 class Master(system: ActorSystem, params: Map[String, Any]) extends Actor {
-
   var job:Cancellable = _
   val logger = ESLoggerFactory.getLogger(getClass.getName)
   val esActor: ActorRef = system.actorOf(Props(new ElasticsearchActor(params("index").toString,
